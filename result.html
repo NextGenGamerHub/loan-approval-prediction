@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Result - LoanPredict AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Top Action & Navigation Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="{{ url_for('predict') }}" class="text-decoration-none"><i class="bi bi-house-door me-1"></i>Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Prediction Result</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold mb-0">Loan Prediction Result</h2>
+        </div>
+        <div class="d-flex gap-2 btn-action">
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm px-3 rounded-pill">
+                <i class="bi bi-printer me-1"></i> Print / Save Report
+            </button>
+            <a href="{{ url_for('predict') }}" class="btn btn-primary-custom btn-sm px-3 rounded-pill">
+                <i class="bi bi-plus-circle me-1"></i> New Prediction
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN RESULT HERO BANNER -->
+    <div class="result-card-banner {% if predicted_class == 1 %}approved{% else %}rejected{% endif %}">
+        
+        <!-- Status Badge -->
+        <div>
+            {% if predicted_class == 1 %}
+                <div class="result-badge approved">
+                    <i class="bi bi-check-circle-fill"></i> LOAN APPROVED
+                </div>
+                <h3 class="fw-bold text-white mb-1">Application Meets Approval Criteria</h3>
+                <p class="text-white-50 mb-0">
+                    The Logistic Regression model evaluated the applicant's credit score and financial profile above the required risk threshold.
+                </p>
+            {% else %}
+                <div class="result-badge rejected">
+                    <i class="bi bi-x-octagon-fill"></i> LOAN REJECTED
+                </div>
+                <h3 class="fw-bold text-white mb-1">Application Below Risk Threshold</h3>
+                <p class="text-white-50 mb-0">
+                    The Logistic Regression model identified high credit risk based on credit score, debt obligations, or asset backing.
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Dual Probabilities Container -->
+        <div class="probabilities-container">
+            <!-- Approval Probability Box -->
+            <div class="prob-box">
+                <div class="prob-title">
+                    <i class="bi bi-shield-check me-1"></i> Approval Probability
+                </div>
+                <div class="prob-number">
+                    {{ approval_probability }}%
+                </div>
+                <div class="prob-meter-bar">
+                    <div class="prob-meter-fill approved-fill" style="width: {{ approval_probability }}%;"></div>
+                </div>
+            </div>
+
+            <!-- Rejection Probability Box -->
+            <div class="prob-box">
+                <div class="prob-title">
+                    <i class="bi bi-shield-x me-1"></i> Rejection Probability
+                </div>
+                <div class="prob-number">
+                    {{ rejection_probability }}%
+                </div>
+                <div class="prob-meter-bar">
+                    <div class="prob-meter-fill rejected-fill" style="width: {{ rejection_probability }}%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decision Threshold Note -->
+        <div>
+            <span class="threshold-indicator">
+                <i class="bi bi-sliders"></i> Decision Classification Threshold: <strong>{{ threshold }}</strong> (Approval Prob. &ge; 50% &rarr; Approved)
+            </span>
+        </div>
+    </div>
+
+    <!-- APPLICANT INFORMATION SUMMARY TABLE -->
+    <div class="card-premium mb-4">
+        <div class="card-header-clean">
+            <h5><i class="bi bi-person-lines-fill text-primary"></i> Submitted Applicant Profile</h5>
+            <span class="text-muted small">
+                <i class="bi bi-calendar3 me-1"></i> Evaluated: {{ timestamp }}
+            </span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="summary-table">
+                    <tbody>
+                        <tr>
+                            <th style="width: 25%;">Number of Dependents</th>
+                            <td style="width: 25%;" class="fw-semibold">{{ applicant.no_of_dependents }}</td>
+                            <th style="width: 25%;">Education Status</th>
+                            <td style="width: 25%;" class="fw-semibold">
+                                <span class="badge bg-light text-dark border">{{ applicant.education }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Employment Type</th>
+                            <td class="fw-semibold">{{ applicant.self_employed }}</td>
+                            <th>Annual Income</th>
+                            <td class="fw-semibold text-primary font-monospace">₹ {{ applicant.income_annum }}</td>
+                        </tr>
+                        <tr>
+                            <th>Loan Amount Requested</th>
+                            <td class="fw-semibold font-monospace">₹ {{ applicant.loan_amount }}</td>
+                            <th>Loan Term</th>
+                            <td class="fw-semibold">{{ applicant.loan_term }}</td>
+                        </tr>
+                        <tr>
+                            <th>CIBIL Credit Score</th>
+                            <td>
+                                <span class="fw-bold font-monospace fs-6">{{ applicant.cibil_score }}</span>
+                                {% if applicant.cibil_score >= 750 %}
+                                    <span class="cibil-badge cibil-excellent">Excellent</span>
+                                {% elif applicant.cibil_score >= 650 %}
+                                    <span class="cibil-badge cibil-good">Good</span>
+                                {% elif applicant.cibil_score >= 550 %}
+                                    <span class="cibil-badge cibil-average">Fair</span>
+                                {% else %}
+                                    <span class="cibil-badge cibil-poor">Poor</span>
+                                {% endif %}
+                            </td>
+                            <th>Bank Asset Value</th>
+                            <td class="fw-semibold font-monospace">₹ {{ applicant.bank_asset_value }}</td>
+                        </tr>
+                        <tr>
+                            <th>Residential Assets</th>
+                            <td class="fw-semibold font-monospace">₹ {{ applicant.residential_assets_value }}</td>
+                            <th>Commercial Assets</th>
+                            <td class="fw-semibold font-monospace">₹ {{ applicant.commercial_assets_value }}</td>
+                        </tr>
+                        <tr>
+                            <th>Luxury Assets</th>
+                            <td class="fw-semibold font-monospace">₹ {{ applicant.luxury_assets_value }}</td>
+                            <th>Prediction Reference ID</th>
+                            <td class="text-muted font-monospace">#{{ prediction_id or 'PRED-ACTIVE' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS: MULTIPLE APPLICANTS SUPPORT -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 p-3 bg-light rounded-4 border btn-action">
+        <div>
+            <strong class="d-block text-dark">Ready to evaluate another applicant?</strong>
+            <span class="text-muted small">You can test multiple loan profiles consecutively without restarting the application.</span>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('predict') }}" class="btn btn-primary-custom px-4">
+                <i class="bi bi-plus-circle-fill me-1"></i> Make Another Prediction
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
