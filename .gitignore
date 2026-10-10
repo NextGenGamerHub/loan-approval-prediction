@@ -1,0 +1,16 @@
+# Environment configuration and secrets
+.env
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE / Editor configuration
+.vscode/
+.idea/
